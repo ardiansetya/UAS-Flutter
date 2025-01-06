@@ -10,17 +10,18 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  final _nameController =
+      TextEditingController(); // Mengganti roleController dengan nameController
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _roleController = TextEditingController();
   final ApiService _apiService = ApiService();
 
   void _register() async {
+    final name = _nameController.text.trim(); // Mengambil nama
     final username = _usernameController.text.trim();
     final password = _passwordController.text.trim();
-    final role = _roleController.text.trim();
 
-    if (username.isEmpty || password.isEmpty || role.isEmpty) {
+    if (name.isEmpty || username.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Harap isi semua kolom')),
       );
@@ -28,8 +29,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     try {
-      print('Mencoba mendaftar dengan: $username, $role');
-      final success = await _apiService.registerUser(username, password, role);
+      print('Mencoba mendaftar dengan: $name, $username');
+      final success = await _apiService.registerUser(
+          name, username, password); // Mengirim name, username, dan password
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Registrasi berhasil')),
@@ -43,6 +45,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,6 +56,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
+              controller: _nameController, // Menggunakan nameController
+              decoration:
+                  const InputDecoration(labelText: 'Name'), // Mengganti label
+            ),
+            const SizedBox(height: 16),
+            TextField(
               controller: _usernameController,
               decoration: const InputDecoration(labelText: 'Username'),
             ),
@@ -61,12 +70,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               controller: _passwordController,
               decoration: const InputDecoration(labelText: 'Password'),
               obscureText: true,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _roleController,
-              decoration:
-                  const InputDecoration(labelText: 'Role (e.g., admin/user)'),
             ),
             const SizedBox(height: 32),
             ElevatedButton(

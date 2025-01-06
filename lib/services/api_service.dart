@@ -47,11 +47,17 @@ class ApiService {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      // Pastikan respons mengandung userId dan role
-      if (data['userId'] == null || data['role'] == null) {
+      // Pastikan respons mengandung data yang diharapkan
+      if (data['data'] == null ||
+          data['data']['id'] == null ||
+          data['data']['role'] == null) {
         throw Exception('Respons tidak lengkap: $data');
       }
-      return data; // Mengembalikan seluruh data respons sebagai Map
+      // Mengembalikan userId dan role
+      return {
+        'userId': data['data']['id'], // Mengambil id sebagai userId
+        'role': data['data']['role'], // Mengambil role
+      };
     } else {
       print('Error: ${response.statusCode} - ${response.body}');
       throw Exception('Gagal login: ${response.body}');
@@ -60,14 +66,14 @@ class ApiService {
 
   // Mendaftar pengguna baru
   Future<bool> registerUser(
-      String username, String password, String role) async {
+      String name, String username, String password) async {
     final response = await _makeRequest(
       'POST',
       '/api/users',
       body: {
-        'username': username,
-        'password': password,
-        'role': role,
+        'name': name, // Mengirim name
+        'username': username, // Mengirim username
+        'password': password, // Mengirim password
       },
     );
 
