@@ -5,13 +5,6 @@ import '../models/product.dart';
 
 class ApiService {
   static const String baseUrl = 'https://api-ppb.vercel.app';
-  static const String rajaOngkirBaseUrl = 'https://api.rajaongkir.com/starter';
-
-  // Fungsi untuk mendapatkan token yang tersimpan
-  Future<String?> _getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token'); // Mengambil token yang disimpan
-  }
 
   // Menambahkan header Authorization dengan token pada request
   Future<http.Response> _makeRequest(
@@ -20,10 +13,8 @@ class ApiService {
     Map<String, String>? headers,
     dynamic body,
   }) async {
-    final token = await _getToken();
     final requestHeaders = {
       'Content-Type': 'application/json',
-      if (token != null) 'Authorization': 'Bearer $token',
       ...?headers,
     };
 
@@ -43,7 +34,7 @@ class ApiService {
   }
 
   // Login pengguna
- Future<Map<String, dynamic>> loginUser(
+  Future<Map<String, dynamic>> loginUser(
       String username, String password) async {
     final response = await _makeRequest(
       'POST',
@@ -52,22 +43,17 @@ class ApiService {
     );
 
     if (response.statusCode == 200) {
-      final Map<String, dynamic> data = json.decode(response.body);
-
-      // Pastikan semua kunci ada dalam respons
-      if (data['token'] == null ||
-          data['userId'] == null ||
-          data['role'] == null) {
+      final data = json.decode(response.body);
+      // Pastikan respons mengandung userId dan role
+      if (data['userId'] == null || data['role'] == null) {
         throw Exception('Respons tidak lengkap: $data');
       }
-
       return data; // Mengembalikan seluruh data respons sebagai Map
     } else {
       print('Error: ${response.statusCode} - ${response.body}');
       throw Exception('Gagal login: ${response.body}');
     }
   }
-
 
   // Mendaftar pengguna baru
   Future<bool> registerUser(

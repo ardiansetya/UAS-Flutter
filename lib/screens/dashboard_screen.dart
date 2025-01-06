@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:uas_ppb/models/product.dart';
 import '../services/api_service.dart';
 import '../widgets/product_card.dart';
+import '../models/product.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
