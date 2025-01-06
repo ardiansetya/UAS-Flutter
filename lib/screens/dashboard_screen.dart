@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../widgets/product_card.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uas_ppb/models/product.dart';
 import '../services/api_service.dart';
-import '../models/product.dart';
+import '../widgets/product_card.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -13,16 +14,25 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   late Future<List<Product>> _products;
   final ApiService _apiService = ApiService();
+  String? _role;
 
   @override
   void initState() {
     super.initState();
     _fetchProducts();
+    _loadUserRole(); // Load user role from SharedPreferences
+  }
+
+  Future<void> _loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _role = prefs.getString('role'); // Get the role from SharedPreferences
+    });
   }
 
   Future<void> _fetchProducts() async {
     setState(() {
-      _products = _apiService.fetchProducts();
+      _products = _apiService.fetchProducts(); // Mengambil produk dari API
     });
   }
 
@@ -78,6 +88,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           }
         },
       ),
+      floatingActionButton: _role == 'admin' // Show button only for admin
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/adminProducts');
+              },
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 }
