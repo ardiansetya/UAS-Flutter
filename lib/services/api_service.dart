@@ -66,7 +66,7 @@ class ApiService {
 
   // Mendaftar pengguna baru
   Future<bool> registerUser(
-      String name, String username, String password) async {
+      String name, String username, String password, String role) async {
     final response = await _makeRequest(
       'POST',
       '/api/users',
@@ -74,6 +74,7 @@ class ApiService {
         'name': name, // Mengirim name
         'username': username, // Mengirim username
         'password': password, // Mengirim password
+        'role': role, // Mengirim role
       },
     );
 
