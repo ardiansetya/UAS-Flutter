@@ -46,6 +46,8 @@ class _LoginScreenState extends State<LoginScreen> {
       // Navigasi ke halaman dashboard
       Navigator.pushReplacementNamed(context, '/dashboard');
     } catch (e) {
+      print('Error saat login: $e'); // Log error
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal login: ${e.toString()}')),
       );

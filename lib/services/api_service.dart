@@ -39,7 +39,10 @@ class ApiService {
     final response = await _makeRequest(
       'POST',
       '/api/users/login',
-      body: {'username': username, 'password': password},
+      body: {
+        'username': username, // Hanya mengirim username
+        'password': password, // Hanya mengirim password
+      },
     );
 
     if (response.statusCode == 200) {
