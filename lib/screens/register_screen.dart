@@ -18,12 +18,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final ApiService _apiService = ApiService();
 
   void _register() async {
-    final name = _nameController.text.trim();
+    final user = _nameController.text.trim();
     final username = _usernameController.text.trim();
     final password = _passwordController.text.trim();
     final role = _roleController.text.trim(); // Mengambil role
 
-    if (name.isEmpty || username.isEmpty || password.isEmpty || role.isEmpty) {
+    if (user.isEmpty || username.isEmpty || password.isEmpty || role.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Harap isi semua kolom')),
       );
@@ -31,8 +31,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     try {
-      print('Mencoba mendaftar dengan: $name, $username, $role');
-      final success = await _apiService.registerUser(name, username, password,
+      print('Mencoba mendaftar dengan: $user, $username, $role');
+      final success = await _apiService.registerUser(user, username, password,
           role); // Mengirim name, username, password, dan role
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(

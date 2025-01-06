@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import '../widgets/product_card.dart';
 import '../models/product.dart';
+import '../screens/product_detail_screen.dart'; // Import halaman detail produk
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -76,10 +77,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   price: product.price.toString(),
                   imageUrl: product.imageUrl,
                   onTap: () {
-                    Navigator.pushNamed(
+                    Navigator.push(
                       context,
-                      '/productDetail',
-                      arguments: product.id,
+                      MaterialPageRoute(
+                        builder: (context) => ProductDetailScreen(
+                            productId: product
+                                .id), // Navigasi ke halaman detail produk
+                      ),
                     );
                   },
                 );

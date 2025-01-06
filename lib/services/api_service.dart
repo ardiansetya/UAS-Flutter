@@ -33,6 +33,27 @@ class ApiService {
     }
   }
 
+  // Mendaftar pengguna baru
+  Future<bool> registerUser(
+      String user, String username, String password, String role) async {
+    final response = await _makeRequest(
+      'POST',
+      '/api/users',
+      body: {
+        'user': user, // Mengirim name
+        'username': username, // Mengirim username
+        'password': password, // Mengirim password
+        'role': role, // Mengirim role
+      },
+    );
+
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception('Gagal mendaftar pengguna: ${response.body}');
+    }
+  }
+
   // Login pengguna
   Future<Map<String, dynamic>> loginUser(
       String username, String password) async {
@@ -64,26 +85,7 @@ class ApiService {
     }
   }
 
-  // Mendaftar pengguna baru
-  Future<bool> registerUser(
-      String name, String username, String password, String role) async {
-    final response = await _makeRequest(
-      'POST',
-      '/api/users',
-      body: {
-        'name': name, // Mengirim name
-        'username': username, // Mengirim username
-        'password': password, // Mengirim password
-        'role': role, // Mengirim role
-      },
-    );
 
-    if (response.statusCode == 201 || response.statusCode == 200) {
-      return true;
-    } else {
-      throw Exception('Gagal mendaftar pengguna: ${response.body}');
-    }
-  }
 
   // Mengambil semua produk
   Future<List<Product>> fetchProducts() async {
