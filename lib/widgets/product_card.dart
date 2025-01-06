@@ -21,37 +21,50 @@ class ProductCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Card(
-        margin: const EdgeInsets.all(8.0),
-        child: Row(
+        elevation: 4,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Menggunakan Image.network untuk menampilkan gambar
             Image.network(
               imageUrl,
-              width: 80,
-              height: 80,
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) =>
-                  const Icon(Icons.error),
+              height: 150, // Tinggi gambar
+              width: double.infinity, // Lebar penuh
+              loadingBuilder: (BuildContext context, Widget child,
+                  ImageChunkEvent? loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Center(
+                  child: CircularProgressIndicator(
+                    value: loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded /
+                            (loadingProgress.expectedTotalBytes ?? 1)
+                        : null,
+                  ),
+                );
+              },
+              errorBuilder:
+                  (BuildContext context, Object error, StackTrace? stackTrace) {
+                return Center(
+                    child: Text('Gagal memuat gambar')); // Pesan kesalahan
+              },
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(description),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Rp $price',
-                    style: const TextStyle(color: Colors.green),
-                  ),
-                ],
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                name,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text(description),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                '\$' + price,
+                style: const TextStyle(color: Colors.green),
               ),
             ),
           ],

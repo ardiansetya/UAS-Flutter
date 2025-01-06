@@ -12,4 +12,12 @@ class Cart {
       jumlah: json['jumlah'],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'user_id': userId,
+      'product_id': productId,
+      'jumlah': jumlah,
+    };
+  }
 }

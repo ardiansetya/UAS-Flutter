@@ -1,219 +1,271 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/product.dart';
 
 class ApiService {
   static const String baseUrl = 'https://api-ppb.vercel.app';
+  static const String rajaOngkirBaseUrl = 'https://api.rajaongkir.com/starter';
 
-  // Register user
+  // Fungsi untuk mendapatkan token yang tersimpan
+  Future<String?> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('auth_token'); // Mengambil token yang disimpan
+  }
+
+  // Menambahkan header Authorization dengan token pada request
+  Future<http.Response> _makeRequest(
+    String method,
+    String endpoint, {
+    Map<String, String>? headers,
+    dynamic body,
+  }) async {
+    final token = await _getToken();
+    final requestHeaders = {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+      ...?headers,
+    };
+
+    final Uri url = Uri.parse('$baseUrl$endpoint');
+    switch (method) {
+      case 'POST':
+        return http.post(url, headers: requestHeaders, body: json.encode(body));
+      case 'GET':
+        return http.get(url, headers: requestHeaders);
+      case 'PUT':
+        return http.put(url, headers: requestHeaders, body: json.encode(body));
+      case 'DELETE':
+        return http.delete(url, headers: requestHeaders);
+      default:
+        throw Exception('Unsupported HTTP method');
+    }
+  }
+
+  // Login pengguna
+ Future<Map<String, dynamic>> loginUser(
+      String username, String password) async {
+    final response = await _makeRequest(
+      'POST',
+      '/api/users/login',
+      body: {'username': username, 'password': password},
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = json.decode(response.body);
+
+      // Pastikan semua kunci ada dalam respons
+      if (data['token'] == null ||
+          data['userId'] == null ||
+          data['role'] == null) {
+        throw Exception('Respons tidak lengkap: $data');
+      }
+
+      return data; // Mengembalikan seluruh data respons sebagai Map
+    } else {
+      print('Error: ${response.statusCode} - ${response.body}');
+      throw Exception('Gagal login: ${response.body}');
+    }
+  }
+
+
+  // Mendaftar pengguna baru
   Future<bool> registerUser(
       String username, String password, String role) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/users'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'user': username,
+    final response = await _makeRequest(
+      'POST',
+      '/api/users',
+      body: {
         'username': username,
         'password': password,
         'role': role,
-      }),
+      },
     );
 
     if (response.statusCode == 201 || response.statusCode == 200) {
       return true;
     } else {
-      throw Exception('Failed to register user');
+      throw Exception('Gagal mendaftar pengguna: ${response.body}');
     }
   }
 
-  // Login user
-  Future<String> loginUser(String username, String password) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/users/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'username': username, 'password': password}),
-    );
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return data['token']; // Assuming API returns a token
-    } else {
-      throw Exception('Login failed');
-    }
-  }
-
-  // Logout user (optional depending on API support)
-  Future<void> logoutUser() async {
-    // Clear local storage or tokens if necessary
-  }
-
-  // Fetch all products
+  // Mengambil semua produk
   Future<List<Product>> fetchProducts() async {
-    final response = await http.get(Uri.parse('$baseUrl/api/products'));
+    final response = await _makeRequest('GET', '/api/products');
 
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
       return data.map((item) => Product.fromJson(item)).toList();
     } else {
-      throw Exception('Failed to load products');
+      throw Exception('Gagal memuat produk: ${response.body}');
     }
   }
 
-  // Fetch product by ID
+  // Mengambil produk berdasarkan ID
   Future<Product> fetchProductById(int productId) async {
-    final response =
-        await http.get(Uri.parse('$baseUrl/api/products/$productId'));
+    final response = await _makeRequest('GET', '/api/products/$productId');
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = json.decode(response.body);
       return Product.fromJson(data);
     } else {
-      throw Exception('Failed to fetch product details');
+      throw Exception('Gagal mengambil detail produk: ${response.body}');
     }
   }
 
-  // Create a new product
+  // Membuat produk baru
   Future<bool> createProduct(Product product) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/products'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'name': product.name,
-        'description': product.description,
-        'price': product.price,
-        'imageUrl': product.imageUrl,
-      }),
+    final response = await _makeRequest(
+      'POST',
+      '/api/products',
+      body: product.toJson(),
     );
 
     if (response.statusCode == 201) {
       return true;
     } else {
-      throw Exception('Failed to create product');
+      throw Exception('Gagal membuat produk: ${response.body}');
     }
   }
 
-  // Update a product
+  // Memperbarui produk
   Future<bool> updateProduct(Product product) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/api/products/${product.id}'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'name': product.name,
-        'description': product.description,
-        'price': product.price,
-        'imageUrl': product.imageUrl,
-      }),
+    final response = await _makeRequest(
+      'PUT',
+      '/api/products/${product.id}',
+      body: product.toJson(),
     );
 
     if (response.statusCode == 200) {
       return true;
     } else {
-      throw Exception('Failed to update product');
+      throw Exception('Gagal memperbarui produk: ${response.body}');
     }
   }
 
-  // Delete a product
+  // Menghapus produk
   Future<bool> deleteProduct(int productId) async {
-    final response = await http.delete(
-      Uri.parse('$baseUrl/api/products/$productId'),
-      headers: {'Content-Type': 'application/json'},
-    );
+    final response = await _makeRequest('DELETE', '/api/products/$productId');
 
     if (response.statusCode == 200) {
       return true;
     } else {
-      throw Exception('Failed to delete product');
+      throw Exception('Gagal menghapus produk: ${response.body}');
     }
   }
 
-  // Add to cart
+  // Menambahkan produk ke keranjang
   Future<bool> addToCart(int userId, int productId, int quantity) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/carts'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
+    final response = await _makeRequest(
+      'POST',
+      '/api/carts',
+      body: {
         'user_id': userId,
         'product_id': productId,
         'jumlah': quantity,
-      }),
+      },
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 201) {
       return true;
     } else {
-      throw Exception('Failed to add product to cart');
+      throw Exception('Gagal menambahkan ke keranjang: ${response.body}');
     }
   }
 
-  // Fetch cart by user
-  Future<List<dynamic>> fetchCart(int userId) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/carts/user'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'user_id': userId}),
-    );
-
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Failed to fetch cart');
-    }
-  }
-
-  // Remove item from cart
-  Future<bool> removeFromCart(int userId, int productId) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/carts/remove'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'user_id': userId, 'product_id': productId}),
-    );
-
-    if (response.statusCode == 200) {
-      return true;
-    } else {
-      throw Exception('Failed to remove product from cart');
-    }
-  }
-
-  // Add shipping info and get receipt
-  Future<bool> addShipping(
-    int userId,
-    String origin,
-    String destination,
-    double cost,
-    double weight,
-  ) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/carts/add-shipping'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
+  // Mengambil keranjang saat ini
+  Future<List<Map<String, dynamic>>> getCurrentCart(int userId) async {
+    final response = await _makeRequest(
+      'POST',
+      '/api/carts/user',
+      body: {
         'user_id': userId,
-        'kota_asal': origin,
-        'kota_tujuan': destination,
-        'biaya_ongkir': cost,
-        'weight': weight,
-      }),
+      },
     );
 
     if (response.statusCode == 200) {
-      return true;
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((item) => item as Map<String, dynamic>).toList();
     } else {
-      throw Exception('Failed to add shipping');
+      throw Exception('Gagal mengambil keranjang: ${response.body}');
     }
   }
 
-  // Checkout and validate payment
-  Future<bool> checkout(int userId, bool isPaid) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/carts/checkout'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'user_id': userId, 'is_paid': isPaid}),
+  // Menghapus produk dari keranjang
+  Future<bool> removeFromCart(int userId, int productId) async {
+    final response = await _makeRequest(
+      'POST',
+      '/api/carts/remove',
+      body: {
+        'user_id': userId,
+        'product_id': productId,
+      },
     );
 
     if (response.statusCode == 200) {
       return true;
     } else {
-      throw Exception('Failed to checkout');
+      throw Exception('Gagal menghapus dari keranjang: ${response.body}');
+    }
+  }
+
+  // Menambahkan biaya pengiriman
+  Future<bool> addShipping(int userId, String kotaAsal, String kotaTujuan,
+      double biayaOngkir, double weight) async {
+    final response = await _makeRequest(
+      'POST',
+      '/api/carts/add-shipping',
+      body: {
+        'user_id': userId,
+        'kota_asal': kotaAsal,
+        'kota_tujuan': kotaTujuan,
+        'biaya_ongkir': biayaOngkir,
+        'weight': weight,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception('Gagal menambahkan biaya pengiriman: ${response.body}');
+    }
+  }
+
+  // Memvalidasi pembayaran
+  Future<bool> validatePayment(int userId, bool isPaid) async {
+    final response = await _makeRequest(
+      'POST',
+      '/api/carts/checkout',
+      body: {
+        'user_id': userId,
+        'is_paid': isPaid,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception('Gagal memvalidasi pembayaran: ${response.body}');
+    }
+  }
+
+  // Memperbarui pengguna
+  Future<bool> updateUser(
+      int userId, String username, String password, String role) async {
+    final response = await _makeRequest(
+      'PUT',
+      '/api/users/$userId',
+      body: {
+        'username': username,
+        'password': password,
+        'role': role,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception('Gagal memperbarui pengguna: ${response.body}');
     }
   }
 }

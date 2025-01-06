@@ -1,15 +1,27 @@
-// screens/splash_screen.dart
 import 'package:flutter/material.dart';
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    Future.delayed(const Duration(seconds: 3), () {
-      Navigator.pushReplacementNamed(context, '/login');
-    });
+  State<SplashScreen> createState() => _SplashScreenState();
+}
 
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Menunda navigasi selama 3 detik
+    Future.delayed(const Duration(seconds: 3), () {
+      // Memastikan widget masih aktif sebelum melakukan navigasi
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
         child: Column(

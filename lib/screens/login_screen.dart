@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
-import '../utils/navigation_utils.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -13,6 +13,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final ApiService _apiService = ApiService();
+  bool _isLoading = false; // To manage loading state
 
   void _login() async {
     final username = _usernameController.text.trim();
@@ -25,17 +26,33 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    setState(() {
+      _isLoading = true; // Start loading
+    });
+
     try {
-      final token = await _apiService.loginUser(username, password);
-      // Simpan token ke storage atau state management
+      final response = await _apiService.loginUser(username, password);
+
+      // Simpan userId dan role ke SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('user_id', response['userId']);
+      await prefs.setString('role', response['role']);
+
+      // Tampilkan pesan sukses
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Login berhasil')),
       );
-      navigateTo(context, '/dashboard'); // Ganti dengan route dashboard Anda
+
+      // Navigasi ke halaman dashboard
+      Navigator.pushReplacementNamed(context, '/dashboard');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal login: $e')),
+        SnackBar(content: Text('Gagal login: ${e.toString()}')),
       );
+    } finally {
+      setState(() {
+        _isLoading = false; // Stop loading
+      });
     }
   }
 
@@ -60,8 +77,11 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: _login,
-              child: const Text('Login'),
+              onPressed:
+                  _isLoading ? null : _login, // Disable button while loading
+              child: _isLoading
+                  ? const CircularProgressIndicator() // Show loading indicator
+                  : const Text('Login'),
             ),
           ],
         ),

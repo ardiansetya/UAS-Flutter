@@ -17,7 +17,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _products = _apiService.fetchProducts();
+    _fetchProducts();
+  }
+
+  Future<void> _fetchProducts() async {
+    setState(() {
+      _products = _apiService.fetchProducts();
+    });
   }
 
   @override
@@ -26,18 +32,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         title: const Text('Dashboard Produk'),
         actions: [
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'Logout') {
-                Navigator.pushReplacementNamed(context, '/login');
-              } else if (value == 'Call Center') {
-                // Add action for call center
-              }
+          IconButton(
+            icon: const Icon(Icons.shopping_cart),
+            onPressed: () {
+              Navigator.pushNamed(context, '/cart');
             },
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: 'Call Center', child: Text('Call Center')),
-              PopupMenuItem(value: 'Logout', child: Text('Logout')),
-            ],
           ),
         ],
       ),
@@ -51,7 +50,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text('Tidak ada produk'));
           } else {
-            return ListView.builder(
+            return GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.75,
+                crossAxisSpacing: 10.0,
+                mainAxisSpacing: 10.0,
+              ),
               itemCount: snapshot.data!.length,
               itemBuilder: (context, index) {
                 final product = snapshot.data![index];
@@ -64,7 +69,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Navigator.pushNamed(
                       context,
                       '/productDetail',
-                      arguments: product,
+                      arguments: product.id,
                     );
                   },
                 );

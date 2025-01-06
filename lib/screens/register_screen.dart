@@ -28,6 +28,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     try {
+      print('Mencoba mendaftar dengan: $username, $role');
       final success = await _apiService.registerUser(username, password, role);
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -36,12 +37,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         navigateTo(context, '/login'); // Redirect ke halaman login
       }
     } catch (e) {
+      print('Error saat registrasi: $e'); // Log error
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal registrasi: $e')),
       );
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
